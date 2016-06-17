@@ -1,4 +1,6 @@
 ---
-title: Under Construction
-slug: under-construction
+title: "Coming Soon"
+slug: coming-soon
 ---
+
+Content not yet posted.
