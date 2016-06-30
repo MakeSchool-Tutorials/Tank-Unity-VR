@@ -235,6 +235,7 @@ Lets go through the hand controller system now.  You should attach this script
 to the hands.
 
 Here is the code for this script:
+
 ~~~
 using UnityEngine;
 using System.Collections;
@@ -777,6 +778,7 @@ way to the player, this is all doable but outside the scope of this
 tutorial.
 
 You can examine the code here:
+
 ~~~
 using UnityEngine;
 using System.Collections;
