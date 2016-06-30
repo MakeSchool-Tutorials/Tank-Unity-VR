@@ -1,3 +1,8 @@
+---
+title:"Tanks Tanks Tanks"
+slug:tanks-tanks-tanks-vr
+---
+
 This tutorial will guide us how to build a complex VR game in Unity.
 This is one of the more complete project experiences and you will learn
 how to build cockpit oriented tank game with working levers to control
