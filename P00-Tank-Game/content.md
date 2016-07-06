@@ -3,6 +3,12 @@ title:"Tanks Tanks Tanks"
 slug:tanks-tanks-tanks-vr
 ---
 
+The package used for this Tutorial can be found via Slack or via:
+
+```
+git clone https://MakeSchool-Tutorials@bitbucket.org/MakeSchool-Tutorials/tanks-unity-vr.git
+```
+
 This tutorial will guide us how to build a complex VR game in Unity.
 This is one of the more complete project experiences and you will learn
 how to build cockpit oriented tank game with working levers to control
