@@ -38,8 +38,7 @@ Track
 
 And Glass textures.
 
-![](./media/image46.png){width="5.328125546806649in"
-height="5.211280621172353in"}
+![](./media/image46.png)
 
 You will notice that the .OBJ file does not map the textures
 automagically. Some formats like FBX will do this for you, but many of
