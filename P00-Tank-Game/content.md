@@ -1,7 +1,15 @@
 ---
-title:"Tanks Tanks Tanks"
-slug:tanks-tanks-tanks-vr
+title: "Tanks Tanks Tanks"
+slug: tanks-tanks-tanks-vr
 ---
+
+In this tutorial, we'll build a VR game in which you control a Tank from the cockpit!
+
+Amongst other things, you'll learn how to:
+- create camera-projected surfaces using Render textures
+- how to move levers with your hands
+
+
 
 The package used for this Tutorial can be found via Slack or via:
 
