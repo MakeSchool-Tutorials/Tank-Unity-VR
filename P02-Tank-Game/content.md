@@ -18,7 +18,9 @@ Now we need to think of a way to see the world outside of the tank. Luckily, Uni
 ![A new RenderTexture](../media/Capture13.png)
 
 >[action]
->Now create a Camera and a Quad, with the quad parented to the Turret and the Camera parented to the Barrel. Position the Camera so that it can see over the Barrel and the Quad so that it sits inside one of the monitors. Position (0,1.72,-1.61) and rotation (0,180,0) worked nicely for our Camera, and position (-0.797,1.22,0.311), rotation (0,180,0), and scale (0.35,0.35,0.35) worked nicely for our Quad.
+>Now create a Camera and a Quad, with the quad parented to the Turret and the Camera parented to the Barrel. Position the Camera so that it can see over the Barrel and the Quad so that it sits inside one of the monitors. Position (0,1.72,-1.61) and rotation (0,180,0) worked nicely for our Camera, and position (-0.797,1.22,0.311), rotation (0,180,0), and scale (0.35,0.35,0.35) worked nicely for our Quad. Remove the Quad's Mesh Collider -- we won't need it, and it will give us an error if we choose to use a Rigidbody to move our Tank (unless we make it convex).
+
+<!-- -->
 
 >[action]
 >Now assign the RenderTexture you created as the Target Texture of the Camera you juts created and as the Albedo Textrue of the Material you created, and assign the Material to the Quad. Be sure to remove the AudioListener from your new Camera!
@@ -40,3 +42,7 @@ Now you can sit in your virtual tank with a camera that lets you look outside!
 ![A virtual world outside](../media/Animation4.gif)
 
 You may have noticed, by the way, that our number of Batches and Tris went up when you added the Camera. This is because each camera you add to your scene has to do its own rendering. That's actually one of the reasons VR is so sensitive: each eye has to be rendered as its own camera.
+
+>[action] Now try making a camera view that shows a view of the tank from behind to go in the upper monitor!
+
+![A second RenderTexture](../media/Capture25.png)

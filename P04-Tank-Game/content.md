@@ -5,742 +5,411 @@ slug: bust-a-move
 
 In prep for Tank movement, we're going to rearrange the structure of the Tank itself.
 
+>[action]
+>Parent Barrel, [CameraRig], Manual_MG, and RC_MG to the Turret.
 
+![The Turret is the parent of a few things](../media/Capture19.png)
 
+When you do this, you'll be prompted with a warning that tells you rearranging the structure of the Prefab will break the connection of that object to the Prefab itself.
 
-First let’s change the prefab a little bit. Group the Body with the
-Track and Wheels so we can rotate it while turning. Also add a RigidBody
-and Box collider to the tank, and a rigidbody set to Kinematic on the
-terrain.
+![A warning about breaking connections of Prefabs will appear](../media/Capture20.png)
 
-![](../media/image37.png)
+This is both okay and expected. Just click the "Apply" button to apply the changes you just made to the Prefab, and then the connection will come back.
 
-Kinematic means the object will be part of the physics simulation, but
-it will be fixed in space, and other objects can crash into it, but it
-will not move. Our terrain will be this. It will be fixed and not move
-and the tank will move on top of it.
+![The Apply button can reconnect the Tank object to the Tank Prefab](../media/Capture21.png)
 
-Now we can focus on the controls that the user will use inside the tank.
-The Tank is controlled by the TankControlScript which should be attached
-to your Camera Rig.
+Now that everything on the Turret is parented to the Turret, when you rotate it around, everything should move with it.
 
-We will design these controls so that the user can grab them with their
-hands and manipulate them to control the tank. It is also possible to
-make the tank controls mimic the current state of the tank if the user
-decides to use a joystick.
+![The Tank Turret rotates](../media/Animation7.gif)
 
-Lets go through the hand controller system now.  You should attach this script
-to the hands.
+You may have noticed, however, that the Alpha object is a problem... It has some pieces that visually look like they should have been part of the Turret, and some other pieces that look like they should have been a part of the Body.
 
-Here is the code for this script:
+We could resolve this issue by splitting up the model in Blender, but since Alpha isn't very significant to making our Tank look like a Tank, we're going to opt for an easier and quicker solution.
 
-~~~
+>[action]
+>Disable Alpha.
+
+![Alpha disabled](../media/Capture22.png)
+
+Now let's make our Tank move!
+
+We want to give it the following movement options:
+1. move forward or backwards
+1. turn left or right
+1. aim turret left or right
+1. aim turret up or down
+
+Eventually, we'll want to make these controlled by levels the player can pull, but let's take this one step at a time.  Let's mock it quickly with a UI that the player will ultimately never interact with, but that we can use for testing.
+
+>[action]
+>Create a Canvas a UI Slider for each control. These will represent our levers. Don't spend too much time on this -- by no means does it need to look pretty -- but do be sure to label each slider clearly and to set their default values to 0.5.
+
+To help with testing, we've also split our views so that we can move the Sliders in the Game View while watching the Tank in the Scene View. We've hidden Stats because we aren't concerned with them right now and they cover part of our UI when they're on.
+
+![Sliders that we will use to mock-up lever controls](../media/Capture23.png)
+
+>[action]
+Now write code to make the Sliders control the Tank.
+>
+The specs should be as follows:
+- The Tank F/B Slider should make the Tank go forwards when on the right, back when on the left, and not at all when in the center. Bonus points if it moves faster the farther it is on either end.
+- The Tank L/R Slider should make the Tank turn right when on the right, left when on the left, and not at all when in the center. Bonus points if it turns faster the farther it is on either end.
+- The Turret L/R Slider should make the Turret aim to exactly 180 degrees about the up axis when all the way on the right, to exactly -180 degrees about the up axis when all the way on the left, and to exactly 0 degrees about the up axis when in the center.
+- The Turret U/D Slider should make the Turret aim to exactly 11 degrees about the right axis when all the way on the right, to exactly -11 degrees about the right axis when all the way on the left, and to exactly 0 degrees about the right axis when in the center.
+>
+You may find it helpful to write two separate scripts: one on the Tank, named, say "Tank," that has public methods on it that are responsible for moving it; and one on the UI, named, say "TankControllerDebug," that is responsible for reading the Slider values and calling the Tank methods as appropriate.
+>
+You may also find it helpful to know that Slider values range between 0 and 1; 1 being on the far right, and 0 being on the far left.
+
+This is a LOT to do at once, so be sure to break it down into small, easily testable steps! Start with the control that sounds easiest to you first!
+
+![The UI Tank Controls in action](../media/Animation9.gif)
+
+>[solution]
+>
+>We did this by writing two components, one called "Tank," which we attached to the Tank, and one called "TankControllerDebug," which we attached to the Canvas.
+>
+Tank looked like this:
+>
+```
 using UnityEngine;
 using System.Collections;
-
-public class HandGrabber : MonoBehaviour {
-    public GameObject grabTarget = null;
-    public GameObject selectionObject;
-    public bool isGrabbing = false;
-    public GameObject selection;
-    public bool isLeftHand;
-    public bool isRightHand;
-    private float startPosition = 0f;
-    private float targetStartPosition = 0f;
-    void Start () {
-
-	}
-
-	void Update () {
-
-        SteamVR_Controller.DeviceRelation idx = SteamVR_Controller.DeviceRelation.FarthestRight ;
-        //Assign hands based on furthest left or furthest right location.
-        if (isLeftHand) idx = SteamVR_Controller.DeviceRelation.Leftmost;
-        if (isRightHand) idx = SteamVR_Controller.DeviceRelation.FarthestRight;
-
-        int hand = SteamVR_Controller.GetDeviceIndex(idx);
-
-        //Control isGrabbing Flag
-        if(!isGrabbing && (SteamVR_Controller.Input(hand).GetHairTriggerDown()))
-        {
-            isGrabbing = true;
-        }
-        if(isGrabbing && (SteamVR_Controller.Input(hand).GetHairTriggerUp()))
-        {
-            isGrabbing = false;
-            selection = null;
-        }
-        if (isGrabbing && grabTarget != null && selection == null)
-        {
-            selection = grabTarget;
-            targetStartPosition = selection.transform.localPosition.z;
-            startPosition = this.transform.position.z;
-        }
-
-
-        selectionObject.SetActive(selection != null);
-        if (selection != null)
-        {
-			//This code might confuse you.. We are moving the sticks in worldspace, but the sticks are in localspace.  This is a method to constrain the Z coordinate to specific ranges in local space, but affect
-			//them from the world space hand controllers, and move them relative to the hand controllers.
-            Vector3 lastPos = selection.transform.localPosition;
-            selection.transform.position = this.transform.position;
-            float zPos = Mathf.Clamp(selection.transform.localPosition.z, 0.15f,0.45f);
-            selection.transform.localPosition = new Vector3(lastPos.x, lastPos.y, zPos);
-        }
-    }
-
-    void OnTriggerExit(Collider c)
-    {
-        if(c.gameObject == grabTarget)
-        {
-            Debug.Log("Collision Left GrabTarget");
-            grabTarget = null;
-            isGrabbing = false;
-            selection = null;
-        }
-    }
-
-//Only trigger enter on objects tagged Control
-    void OnTriggerEnter(Collider c)
-    {
-        if(grabTarget == null && c.tag == "Control")
-        {
-            Debug.Log("Collision Entered Controllable Surface");
-            grabTarget = c.gameObject;
-        }
-    }
-}
-~~~
-
-![](../media/image18.png)
-
-This is a very important script, so let’s examine how it works:
-
-~~~
-using UnityEngine;
-using System.Collections;
-using System;
-
-public class TankControlScript : MonoBehaviour {
-
-    private Vector3 respawnPosition;
-    public GameObject GunStickUpDown;
-    public GameObject GunStickLeftRight;
-    public GameObject TankMoveForwardBackward;
-    public GameObject TankMoveLeftRight;
-    public GameObject TankFireButton;
-
-    public GameObject TankBody;
-    public GameObject TankTurret;
-
-    public Rigidbody TankRigidBody;
-
-    public GameObject BulletSpawner;
-    public GameObject BulletPrefab;
-    public GameObject SmokePrefab;
-
-    public AudioSource rotateTurretSound;
-    public AudioSource rollTankSound;
-    public AudioSource dieSound;
-
-    private Vector2 GunControlPosition = new Vector2(0.5f, 0.5f);
-    private Vector2 TankControlPosition = new Vector2(0.5f, 0.5f);
-    private float timeLeftToReload = 0f;
-
-    public float reloadTime = 1f;
-    public float turnSpeed = 0.1f;
-    public float accelerationSpeed = 0.1f;
-    public float maxMoveVelocity = 1f;
-    public float turretRotationSpeed = 0.5f;
-    public float bulletForce = 100f;
-    public Vector4 MaxTankTurretRanges = new Vector4(-14f, 14f, 0f, 8f);
-    public Vector2 MaxBodyRotationRange = new Vector2(-50f, 50f);
-
-    public bool KeyboardEnabled = true;
-    public bool TouchControllersEnabled = false;
-
-	void Start () {
-        respawnPosition = this.transform.position;
-    }
-
-	void Update () {
-        if (KeyboardEnabled)
-        {
-            ProcessKeyboardInputs();
-            DrawControlState();
-        }
-        if(TouchControllersEnabled)
-        {
-            ReadControlState();
-        }
-        ApplyStateToTank();
-    }
-
-    private void ApplyStateToTank()
-    {
-
-        rollTankSound.mute = !(TankControlPosition.y < 0.45f || TankControlPosition.y > 0.55f);
-        Quaternion newRotation = Quaternion.Euler(new Vector3(
-        Mathf.Lerp(MaxTankTurretRanges.z, MaxTankTurretRanges.w, GunControlPosition.y),
-            Mathf.Lerp(MaxTankTurretRanges.x, MaxTankTurretRanges.y, GunControlPosition.x),
-        0f));
-        TankTurret.transform.localRotation = newRotation;
-
-        newRotation = Quaternion.Euler(new Vector3(
-        0f,
-        Mathf.Lerp(MaxBodyRotationRange.x, MaxBodyRotationRange.y, TankControlPosition.x),
-        0f));
-
-        TankBody.transform.localRotation = newRotation;
-        Vector3 rotationVector = new Vector3(0f, Mathf.Lerp(-50f, 50f, TankControlPosition.x), 0f);
-        Vector3 force = (TankBody.transform.forward.normalized + newRotation.eulerAngles.normalized) * Mathf.Clamp(accelerationSpeed * Mathf.Lerp(1,-1,TankControlPosition.y),
-            -maxMoveVelocity,
-            maxMoveVelocity);
-        TankRigidBody.AddForce(-TankRigidBody.velocity, ForceMode.VelocityChange);
-        TankRigidBody.AddForce(force, ForceMode.VelocityChange);
-        if (timeLeftToReload > 0f) timeLeftToReload -= Time.deltaTime;
-    }
-
-    private void DrawControlState()
-    {
-        Vector3 pos = GunStickUpDown.transform.localPosition;
-        pos.z = Mathf.Lerp(0.45f, 0.15f, GunControlPosition.y);
-        GunStickUpDown.transform.localPosition = pos;
-
-        pos = GunStickLeftRight.transform.localPosition;
-        pos.z = Mathf.Lerp(0.15f, 0.45f, GunControlPosition.x);
-        GunStickLeftRight.transform.localPosition = pos;
-
-        pos = TankMoveLeftRight.transform.localPosition;
-        pos.z = Mathf.Lerp(0.15f, 0.45f, TankControlPosition.x);
-        TankMoveLeftRight.transform.localPosition = pos;
-
-        pos = TankMoveForwardBackward.transform.localPosition;
-        pos.z = Mathf.Lerp(0.45f, 0.15f, TankControlPosition.y);
-        TankMoveForwardBackward.transform.localPosition = pos;
-    }
-
-     private void ReadControlState()
-     {
-        float min = 0.15f;
-        float max = 0.45f;
-        Vector3 pos = GunStickUpDown.transform.localPosition;
-        float value = pos.z - min;
-        value = value / (max - min);
-        GunControlPosition.y = value;
-
-        pos = GunStickLeftRight.transform.localPosition;
-
-        value = pos.z - min;
-        value = value / (max - min);
-        GunControlPosition.x = value;
-
-        pos = TankMoveLeftRight.transform.localPosition;
-        value = pos.z - min;
-        value = value / (max - min);
-        TankControlPosition.x = value;
-
-        pos = TankMoveForwardBackward.transform.localPosition;
-        value = pos.z - min;
-        value = value / (max - min);
-        TankControlPosition.y = value;
-     }
-
-    private void ProcessKeyboardInputs()
-    {
-        bool rotateTurretMute = true;
-        if(Input.GetKey(KeyCode.Space) && timeLeftToReload <= 0f)
-        {
-            FireCannon();
-        }
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            TankControlPosition.y += accelerationSpeed * Time.deltaTime;
-            if (TankControlPosition.y >= 1f) TankControlPosition.y = 1f;
-        }
-        if (Input.GetKey(KeyCode.DownArrow))
-        {
-            TankControlPosition.y -= accelerationSpeed * Time.deltaTime;
-            if (TankControlPosition.y <= 0f) TankControlPosition.y = 0f;
-        }
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            TankControlPosition.x -= turnSpeed * Time.deltaTime;
-            if (TankControlPosition.x <= 0f) TankControlPosition.x = 0f;
-        }
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            TankControlPosition.x += turnSpeed * Time.deltaTime;
-            if (TankControlPosition.x >= 1f) TankControlPosition.x = 1f;
-        }
-
-        if (Input.GetKey(KeyCode.S))
-        {
-            rotateTurretMute = false;
-            GunControlPosition.y -= turretRotationSpeed * Time.deltaTime;
-            if (GunControlPosition.y <= 0f) GunControlPosition.y = 0f;
-        }
-        if (Input.GetKey(KeyCode.W))
-        {
-            rotateTurretMute = false;
-            GunControlPosition.y += turretRotationSpeed * Time.deltaTime;
-            if (GunControlPosition.y >= 1f) GunControlPosition.y = 1f;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            rotateTurretMute = false;
-            GunControlPosition.x -= turretRotationSpeed * Time.deltaTime;
-            if (GunControlPosition.x <= 0f) GunControlPosition.x = 0f;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            rotateTurretMute = false;
-            GunControlPosition.x += turretRotationSpeed * Time.deltaTime;
-            if (GunControlPosition.x >= 1f) GunControlPosition.x = 1f;
-        }
-        rotateTurretSound.mute = rotateTurretMute;
-    }
-
-    private void FireCannon()
-    {
-        timeLeftToReload = reloadTime;
-        Destroy((GameObject)Instantiate(SmokePrefab, BulletSpawner.transform.position, Quaternion.identity), 7f);
-        GameObject bullet = (GameObject)Instantiate(BulletPrefab, BulletSpawner.transform.position, Quaternion.identity);
-        bullet.GetComponent<Rigidbody>().AddForce(BulletSpawner.transform.forward * bulletForce);
-    }
-
-    public void BulletHit()
-    {
-        //Hit by a bullet.
-        this.GetComponent<Rigidbody>().isKinematic = true;
-        this.transform.position = respawnPosition;
-        this.GetComponent<Rigidbody>().isKinematic = false;
-        dieSound.Play();
-    }
-}
-~~~
-
-Every frame we run a check if the Keyboard controls are enabled, if they
-are we run ProcessKeyboardInputs() to update the data models for
-GunControlPosition and TankControlPosition, then we run
-DrawControllerState() to synchronize the positions of the levers with
-our model values.
-
-Then we check if TouchControllersAreEnabled and if they are we do the
-opposite and ReadControlState() to read the positions of the levers and
-translate them back into model values. When you have a touch controller
-you physically move the levers back and forth and their position
-correlates with a value between 0 and 1. This value uses Linear
-Interpolation (**LERP**) to interpolate all the rest of our tank
-position values, from the speed to the rotations and angles of all of
-the different parts of the tank as it moves.
-
-LERP is very important, it allows you to find a value between two ranges
-based on another value between 0 and 1.
-
-So for example, if I have a slider and it’s value is 0 to 1, and I want
-to map it to a number between 1 and 100 I can use LERP and it will
-translate 0.5 into 50. You might say, wow that’s stupid, I can just use
-percentages for that and multiply 0.5 \* 100 = 50.
-
-Well, that is true, but that only works when you are doing 1 out of 100.
-
-Of course you can also divide to give you a percentage when you have a
-number along a range like 32 / 192 = 0.16666, so we know that 32 is
-16.66% of 192. But again that is assuming you are dealing with the range
-of 0 to 192. If you are dealing with 30 - 192, 32 is no longer 16% of
-the total, and if you want to find out what number is 16% of the way
-along of 30-192 you use LERP.
-
-What makes LERP really powerful is when you LERP very weird number
-ranges like -45 and 30. 0.5 will still find the midway point between
-those two numbers. 0.25 will find the ¼ point between those numbers.
-This helps us figure out exact rotation amounts based on the lever
-locations in the cockpit.
-
-Unity has a very nice helper function for this called
-Mathf.LERP(minRange, maxRange, percentage (0-1));
-
-Finally there is method here to fire the cannon, it’s pretty
-straightforward, it makes some smoke and a cannonball and honors reload
-time.
-
-Now we need to attach the Main Camera to the barrel, so that when we
-look with the barrel the camera will follow it. We should also lock the
-X coordinate and Z rotation and the Y position of the rigid body so that
-the tank won’t climb the mountains. The reason for this is the tank will
-move along its forward vector, so if it tilts upward it will start
-climbing into the sky. There are ways to fix this, but for this game it
-is acceptable to just lock the rotation and position of the Rigidbody.
-
-You can see all of these settings below:
-
-![](../media/image31.png)
-
-Also add a Bullet Spawner to the front of the tank barrel. This will be
-the location that the bullet, smoke, and fire will be spawned when we
-shoot the cannon. Use this image as a reference of where to put it. Also
-make sure it is rotated correctly so we can use its Vector3.forward
-property to determine the angle to launch the bullet.
-
-![](../media/image30.png)
-
-Now we can get to the fun stuff. Let’s make our first tank bullet.
-Create a new Sphere and call it TankShell. Then create a TankShell
-Material in our Materials folder. Drag it to the tank shell, paint it
-black, and drag the shell to our prefabs folder:
-
-![](../media/image08.png)
-
-![](../media/image16.png)
-
-We can now create a particle system to spray smoke out when the cannon
-goes off, and when the shell lands.
-
-So import the standard ParticleSystems package from Unity under the
-Assets menu.
-
-Now you can attach Smoke to our BulletSpawner so we can see how it will
-appear when it spawns at the front of the tank during a shot. Obviously
-this smoke prefab isn’t right for us, but we can change it to do exactly
-what we want...Let’s do that now.
-
-![](../media/image40.png)
-
-Click the smoke particle system then click Open Editor to view the
-particle editor, this will let you simulate and stop the effect and test
-it. Copy the settings you see on the left panel. A particle system lets
-you spawn hundreds of tiny textures that blend with the environment for
-a cheap cost. You can control the behavior of these tiny instances over
-time. We want the duration to be short, this is an explosion from a gun,
-so set the Duration to 0.25. Make sure Looping is off, this is a one
-shot kind of thing.
-
-We want the smoke to linger so set the Start Lifetime to 1 to 5, this
-means each particle has a random lifetime of beween 1 and 5 seconds.
-
-Start Speed will be 15, this will make the smoke propel forward at a
-fast speed from the front of the cannon.
-
-Start Size should be 15 to 25, this will control the scale of each
-smokelet.
-
-The Rotation is fine -18 to 180 this will control how the particles
-rotate as they are emitted.
-
-Gravity Modifier will control how gravity affects the particles. Smoke
-rises, so we want to add a slight -0.5 modifier to make it slowly rise
-into the air.
-
-Simulation Space World means that the smoke will exist in the world,
-this is important because if we make the smoke a child of the tank we
-still want the smoke to float in the world and not follow the tank
-around.
-
-Max particles 500 is fine, that is the maximum this engine can spawn.
-
-Emission should be 100, we want 100 quick particles when the system is
-created.
-
-Shape should be Cone, we can then rotate the cone to come out of the
-front of the cannon and the smoke will fly forward as expected.
-
-You will need to adjust Color over Lifetime. This property controls how
-opaque or transparent the smoke will be, and if it is tinted. The
-standard black tint is fine, but adjust the alpha settings so the smoke
-stays solid for longer.
-
-That should be it. Now when you press Simulate at the top the smoke
-explosion effect will look quite realistic.
-
-Now drag your SmokeEffect to your Prefabs folder so we can create it
-whenever we want.
-
-Now we can make a Tank Chase Cam to give us another view of our tank
-inside the cockpit. Why not? Let’s have more than one screen to look at,
-the advantage of VR!
-
-![](../media/image49.png)
-
-All we gotta do is make another RenderTexture, and another Material for
-it. So make TankChaseCam RenderTexture and Material, then bind them
-together as we did earlier for the first chasecam. Then we will
-duplicate the quad we already have and move it up into position above
-the other one. Then we can attach our camera to the tank and hover it
-above the tank as shown in the picture, make sure it renders to our
-render texture, and that’s really all you have to do.
-
-Now for the Bullet, let’s make a bullet and a bullet script. Go back to
-TankShell and create a script on it called BulletShell.
-
-This script will be really simple:
-
-~~~
-using UnityEngine;
-using System.Collections;
-
-public class BulletShell : MonoBehaviour {
-    public GameObject ExplosionPrefab;
-    void OnTriggerEnter(Collider c)
-    {
-        c.gameObject.SendMessage("BulletHit", SendMessageOptions.DontRequireReceiver);
-        Destroy((GameObject)Instantiate(ExplosionPrefab, this.transform.position, Quaternion.identity), 7f);
-        Destroy(this.gameObject);
-    }
-}
-~~~
-
-We are waiting for a collision of any kind, when the bullet collides
-with anything it will destroy itself, spawn an explosion, and send a
-message to that object called BulletHit. The object it sends the message
-to will decide what to do with BulletHit. This is good design, because
-the bullet is doing it’s job beautifully, but it is not deciding how to
-affect anyone else, it is simply letting them know if it hits them. Now
-when we make enemy tanks all we need to do is give them a BulletHit
-method, and whenever they get hit by a bullet we can make them get hurt
-or die.
-
-As you can see we also bind a public variable
-
-**public GameObject ExplosionPrefab;**
-
-ExplosionPrefab is the prefab we want to spawn when the bullet explodes.
-Note how we Instantiate this prefab:
-
-Destroy((GameObject)Instantiate(ExplosionPrefab,
-this.transform.position, Quaternion.identity), 7f);
-
-It looks like a lot of stuff, but it is simple: Destroy() tells the
-object to be destroyed (at the end there you can see 7f, which means
-after 7 seconds). This ensures the particle system gets cleaned up after
-it’s done.
-
-(GameObject)Instantiate is a cast of the result of Instantiate to
-GameObject.
-
-Then we decide what we want to instantiate, which is ExplosionPrefab,
-and we want to put it right where the bullet is at a 0,0,0 rotation
-(Quaternion.identity)
-
-We almost have a complete game now. All we need are some enemies and a
-goal.
-
-So to create enemies let’s get an asset from the asset store. There is a
-really low polygon tank called 38t. It is included in your lesson
-package under Prefabs, it is called Enemy\_Tank. We are going to use
-this tank to be our enemy and create a brain for it, to allow it to move
-around the world.
-
-First make a gameobject called Enemy\_Tanks, this will be the root node
-for all of our enemies, and drag enemies around the map and make them
-part of the Enemy\_Tanks node.
-
-![](../media/image43.png)
-
-Now we should add some tags into the game. These tags are going to be
-used to handle raycasting to find the player, and also to detect the
-terrain.
-
-![](../media/image10.png)
-
-![](../media/image36.png)
-
-Enemy Tanks already has the brain script attached to it, here is a
-rundown of how it works:
-
-We have 2 main methods that run every frame on Update():
-
-UpdateState();
-
-TickState();
-
-UpdateState examines the current state and decides if we need a new
-state or not.
-
-TickState moves the current state forward in whatever way it can.
-
-UpdateState will first call CheckTargetVisible() which will shoot a
-raycast from the enemy tank to the player. If it hits terrain it sits
-around and waits until the player comes into view. Once the player is in
-view it switches its state to GETTING\_CLOSER, if the tank is out of
-range to fire then it starts moving in the direction of the player until
-either the player leaves view again or it gets within range. Once it is
-within range it fires as fast as possible (and reloads) until it either
-gets out of range again or out of view again or dies.
-
-It is relatively simple AI, it won’t roam around searching for the
-player or chase the player around a corner, this would require a bunch
-of additional stuff to examine the surrounding terrain and path find the
-way to the player, this is all doable but outside the scope of this
-tutorial.
-
-You can examine the code here:
-
-~~~
-using UnityEngine;
-using System.Collections;
-
-public class TankBrainAI : MonoBehaviour {
-    private GameObject target;
-    private bool canSeeTarget;
-    private float distanceToTarget;
-    public float minDistanceBeforeFiring = 10f;
-    public float moveSpeed = 1f;
-    public float reloadTime = 2f;
-    private float timeLeftToFire = 2f;
-    public float firePowerMultiplier = 4000f;
-    public GameObject tank;
-    public GameObject tankBody;
-    public GameObject tankTurret;
-    public GameObject BulletPrefab;
-    public int counter = 0;
-    private BrainState currentState;
-    public enum BrainState
-    {
-        SCANNING,
-        GETTING_CLOSER,
-        FIRING
-    }
+>
+[RequireComponent(typeof(Rigidbody))]
+public class Tank : MonoBehaviour {
+>
+    public float tankMovementSpeed;
+    public float tankRotationSpeed;
+    public float turretPitchBound;
+    public float turretYawBound;
+>
+    public Transform turret;
+    private Rigidbody rb;
+>
 	// Use this for initialization
 	void Start () {
-        target = GameObject.FindGameObjectWithTag("Player");
+        rb = GetComponent<Rigidbody>();
 	}
-
-	// Update is called once per frame
-	void Update () {
-        UpdateState();
-        TickState();
-	}
-
-    private void UpdateState()
+>
+    public void Move(float intensity)
     {
-        CheckTargetVisible();
-        if (canSeeTarget == false)
-        {
-            currentState = BrainState.SCANNING;
-            return;
-        }
-        if(distanceToTarget <= minDistanceBeforeFiring)
-        {
-            currentState = BrainState.FIRING;
-        }
-        else
-        {
-            currentState = BrainState.GETTING_CLOSER;
-        }
+        rb.velocity = transform.forward * ClampedIntensity(intensity) * tankMovementSpeed;
     }
-
-    private void TickState()
+>
+    public void Turn(float intensity)
     {
-        switch (currentState)
-        {
-            case BrainState.GETTING_CLOSER:
-                tank.transform.LookAt(target.transform);
-                this.transform.position = Vector3.MoveTowards(this.transform.position, target.transform.position, moveSpeed * Time.deltaTime);
-                break;
-            case BrainState.FIRING:
-                if(timeLeftToFire >= 0f)
-                {
-                    timeLeftToFire -= Time.deltaTime;
-                    return;
-                }
-                else
-                {
-                    Fire();
-                }
-                break;
-        }
+        rb.angularVelocity = transform.up * ClampedIntensity(intensity) * tankRotationSpeed;
     }
-
-    private void Fire()
+>
+    public void TurnTurret(float intensityX, float intensityY)
     {
-        //Always look at the target before you fire.
-        tank.transform.LookAt(target.transform);
-        GameObject bullet = (GameObject)Instantiate(BulletPrefab, tankTurret.transform.position, Quaternion.identity);
-        bullet.GetComponent<Rigidbody>().AddForce(tank.transform.forward * firePowerMultiplier);
-        timeLeftToFire = reloadTime;
+        turret.localRotation = Quaternion.Euler(
+            ClampedIntensity(intensityX) * turretPitchBound,
+            ClampedIntensity(intensityY) * turretYawBound,
+            0
+        );
     }
-
-    public void BulletHit()
+>
+    private float ClampedIntensity(float intensity)
     {
-        //Bang Bang...
-        tankTurret.transform.parent = null;
-        tankBody.transform.parent = null;
-        tankBody.AddComponent<SphereCollider>();
-        tankTurret.AddComponent<SphereCollider>();
-        Rigidbody body = tankBody.AddComponent<Rigidbody>();
-        body.AddExplosionForce(100f, this.transform.position - (this.transform.up * 2f), 3f);
-        Rigidbody turret = tankTurret.AddComponent<Rigidbody>();
-        turret.AddExplosionForce(50f, this.transform.position - (this.transform.up * 2f), 2f);
-        Destroy(this.gameObject, 3f);
-        Destroy(turret.gameObject, 7f);
-        Destroy(body.gameObject, 7f);
-    }
-
-    private void CheckTargetVisible()
-    {
-        counter++;
-        //This is a trick to make it only raycast once every 20 frames, so we can reduce the cost of raycasting.
-        if (counter % 20 == 0)
-        {
-            RaycastHit hit;
-            canSeeTarget = false;
-            Vector3 origin = this.transform.position + (this.transform.up * 5f);
-           // Debug.DrawLine(origin, (target.transform.position - origin) * 100f, Color.blue, 4f);
-            if (Physics.Raycast(origin, (target.transform.position - origin) * 100f, out hit))
-            {
-                if (hit.collider.tag == "Terrain")
-                {
-                    return;
-                }
-                if (hit.collider.tag == "Player")
-                {
-                    canSeeTarget = true;
-                    distanceToTarget = Vector3.Distance(this.transform.position, target.transform.position);
-                }
-            }
-        }
+        return Mathf.Clamp(intensity, -1f, 1f);
     }
 }
-~~~
+>
+```
+>
+and TankControllerDebug looked like this:
+>
+```
+using UnityEngine;
+using System.Collections;
+using UnityEngine.UI;
+>
+public class TankControllerDebug : MonoBehaviour {
+>
+    public Slider sliderMoveFB;
+    public Slider sliderTurnLR;
+    public Slider sliderTurretLR;
+    public Slider sliderTurretUD;
+>
+    public Tank tank;
+>
+	// Update is called once per frame
+	void Update () {
+>
+        tank.Move(GetIntensity(sliderMoveFB));
+        tank.Turn(GetIntensity(sliderTurnLR));
+        tank.TurnTurret(GetIntensity(sliderTurretUD), GetIntensity(sliderTurretLR));
+>
+	}
+>
+    private float GetIntensity(Slider slider)
+    {
+        return (slider.value - 0.5f) * 2f;
+    }
+}
+```
+>
+We dragged the expected objects into the slots we created by declaring public variables -- Tank into the TankControllerDebug's Tank slot; all the Sliders into the slots of the same names; Turret into the Tank's Turret slot -- and set the Tank's TankMovementSpeed to 5, TankRotationSpeed to 5, TurretPitchBound to 11, and TurretYawBound to 180 (though you may find better values through testing!).
+>
+We chose to use physics to move our Tank, because, in conjunction with a Collider, this means that we get collisions with the mountains for free :) Just be sure to lift the tank out of the ground (if your Terrain is at height 0, likely your Tank is embedded in it).
 
-Finally we need to add some sound effects to really get us into the
-game.
+All right, now it's lever time!
 
-I have included a number of sounds from the Ultimate Sound FX pack, they
-are in the Sounds folder. You can use these sounds in your own games if
-you purchase a license for the pack.
+#Lever Time
 
-![](../media/image21.png)
+>[action]
+>Make a set of 4 levers out of primitives like Cubes, and position the set of levers in front of the seat you expect our player to use.
 
-Now you can see we have attached 4 audio sources to our main tank. These
-include the death sound, the rotate turret sound, the tank movement
-sound, and ambient forest wind sound.
+![The Control Panel](../media/Capture24.png)
 
-We turn all of them to on and loop, but mute them, all except for the
-death sound. The death sound is played by script when necessary. The
-wind sound is always looping, the rotate turret sound is unmuted while
-the turret is being rotated, and the tank movement sound is unmuted
-while the tank movement speed is above 5% in either direction. The
-explosion sound is attached to the explosion effect and autoplays, and
-the tank\_shot sound effect is attached to the bullet. So whenever
-anyone, enemy or player shoots a bullet it will play.
+We want to be able to pull on these levers and have them move forwards and backwards, but no other directions, and to be bounded -- basically, we're trying to simulate them being in slats that constrain their motion.
 
-Make sure all of your TankControlScript public variables are mapped in
-editor like this:
+In order to do this, we're going to write a script, and we're also going to make it give us some visual feedback.
 
-![](../media/image48.png)
+>[action]
+>Create a component named "TankController," attach it to your Control Panel, and give it the following definition:
+>
+```
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+>
+public class TankController : MonoBehaviour {
+>
+    public float leverBound;
+>
+    public Transform leverMoveFB;
+    public Transform leverTurnLR;
+    public Transform leverTurretLR;
+    public Transform leverTurretUD;
+>
+    private Transform[] levers;
+>
+	// Use this for initialization
+	void Start () {
+>
+        List<Transform> leversMut = new List<Transform>();
+>
+        leversMut.Add(leverMoveFB);
+        leversMut.Add(leverTurnLR);
+        leversMut.Add(leverTurretLR);
+        leversMut.Add(leverTurretUD);
+>
+        levers = leversMut.ToArray();
+>
+        foreach (Transform lever in levers)
+        {
+            CreateIndicator(lever.position + lever.forward * leverBound);
+            CreateIndicator(lever.position - lever.forward * leverBound);
+        }
+	}
+>
+    private void CreateIndicator(Vector3 position)
+    {
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.transform.localScale = Vector3.one * 0.05f;
+        go.transform.position = position;
+        go.transform.SetParent(transform);
 
-Finally we added some death respawner code to our player so when the
-player is shot they jump back to the respawn position and play the death
-sound. It doesn’t reset the level, but it can be frustrating because you
-need to go all the way back to where you were from the beginning. Kind
-of fun to try to make it to the end.
+    }
+>
+	// Update is called once per frame
+	void Update () {
+>
+        foreach (Transform lever in levers)
+        {
+            Vector3 localPosition = lever.localPosition;
+            localPosition.z = Mathf.Clamp(localPosition.z, -leverBound, leverBound);
+            lever.localPosition = localPosition;
+        }
+	}
+}
+```
+>
+Then add the levers to the slots.
 
-So this concludes our tank game tutorial, I hope you enjoyed it. As
-always you can see the final scene file if you have any questions how to
-put anything together, but it is always best to rebuild the scene file
-from scratch so you understand everything.
+When you run the Scene and try to drag the levers past the bounds, they should stop at the spheres :)
 
-Happy VRing!
+![The levers stop at the spheres](../media/Animation10.gif)
+
+Now let's make the levers grabbable by our controllers when we press the Trigger.
+
+>[action]
+>Create the following component, and then add it to each hand:
+>
+```
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+>
+[RequireComponent(typeof(SteamVR_TrackedController))]
+public class LeverGrabber : MonoBehaviour {
+>
+    private SteamVR_TrackedController controller;
+    private HashSet<Transform> leversInReach = new HashSet<Transform>();
+    private List<Transform> leversGrabbed = new List<Transform>();
+>
+	// Use this for initialization
+	void Start () {
+        controller = GetComponent<SteamVR_TrackedController>();
+
+        controller.TriggerClicked += Controller_TriggerClicked;
+        controller.TriggerUnclicked += Controller_TriggerUnclicked;
+	}
+>
+    private void Controller_TriggerClicked(object sender, ClickedEventArgs e)
+    {
+        leversInReach.ToList();
+    }
+>
+    private void Controller_TriggerUnclicked(object sender, ClickedEventArgs e)
+    {
+        leversGrabbed.Clear();
+    }
+>
+    void OnTriggerEnter(Collider col)
+    {
+        if (col.gameObject.CompareTag("Lever"))
+        {
+            leversInReach.Add(col.transform);
+        }
+    }
+>
+    void OnTriggerExit(Collider col)
+    {
+        if (col.gameObject.CompareTag("Lever"))
+        {
+            leversInReach.Remove(col.transform);
+        }
+    }
+>
+    public Transform[] GetLeversGrabbed()
+    {
+        return leversGrabbed.ToArray();
+    }
+}
+```
+>
+and add a Sphere Collider to your controller, sized and positioned so that it's at the edge, and set Is Trigger to true. Also add a Rigidbody with Use Gravity set to false and Is Kinematic set to true.
+
+![The controller set up](../media/Capture26.png)
+
+>[action]
+>Then modify your TankController component to look like the following:
+>
+```
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+>
+public class TankController : MonoBehaviour {
+>
+    public Tank tank;
+    public LeverGrabber[] grabbers;
+>
+    public float leverBound;
+>
+    public Transform leverMoveFB;
+    public Transform leverTurnLR;
+    public Transform leverTurretLR;
+    public Transform leverTurretUD;
+>
+    private Transform[] levers;
+>
+    // Use this for initialization
+    void Start()
+    {
+>
+        List<Transform> leversMut = new List<Transform>();
+>
+        leversMut.Add(leverMoveFB);
+        leversMut.Add(leverTurnLR);
+        leversMut.Add(leverTurretLR);
+        leversMut.Add(leverTurretUD);
+>
+        levers = leversMut.ToArray();
+>
+        foreach (Transform lever in levers)
+        {
+            CreateIndicator(lever.position + lever.forward * leverBound);
+            CreateIndicator(lever.position - lever.forward * leverBound);
+        }
+    }
+>
+    private void CreateIndicator(Vector3 position)
+    {
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.transform.localScale = Vector3.one * 0.05f;
+        go.transform.position = position;
+        go.transform.SetParent(transform);
+    }
+>
+	// Update is called once per frame
+	void Update () {
+>
+        foreach (LeverGrabber grabber in grabbers)
+        {
+            Transform[] leversGrabbed = grabber.GetLeversGrabbed();
+>
+            foreach (Transform lever in leversGrabbed)
+            {
+                Vector3 leverLocalPositionOld = lever.localPosition;
+                lever.position = grabber.transform.position;
+                Vector3 leverLocalPositionNew = lever.localPosition;
+>
+                leverLocalPositionNew.z = Mathf.Clamp(lever.localPosition.z, -leverBound, leverBound);
+                leverLocalPositionNew.x = leverLocalPositionOld.x;
+                leverLocalPositionNew.y = leverLocalPositionOld.y;
+
+                lever.localPosition = leverLocalPositionNew;
+            }
+        }
+	}
+>
+    private float GetLeverIntensity(Transform lever)
+    {
+        return lever.localPosition.z / leverBound;
+    }
+}
+```
+>
+>and add your controllers to the array of LeverGrabbers in the editor (expand with the arrow, enter "2," hit "Enter," and then drag as usual into the slots).
+
+<!-- -->
+
+>[action]
+>Tag your levers with the tag "Lever" before you run the Scene!
+
+Then when you run it...
+
+Presto!
+
+![The levers can be pulled :)](../media/Animation11.gif)
+
+Now all that's left to do is read values from our levers and transmit those to the Tank ;) Think you're up for it?
+
+>[action]
+>Make the levers control the Tank! A good first step if you don't know where to start is to output values for the levers between -1 and 1, like we did for the Sliders. Then you can just use the same logic that the Sliders used.
+
+<!-- -->
+
+>[solution]
+>
+We did this by adding the following to the end of TankController's Update method:
+>
+```
+tank.Move(GetLeverIntensity(leverMoveFB));
+tank.Turn(GetLeverIntensity(leverTurnLR));
+tank.TurnTurret(GetLeverIntensity(leverTurretUD), GetLeverIntensity(leverTurretLR));
+```
+>
+where GetLeverIntensity is a new function we defined as such:
+>
+```
+private float GetLeverIntensity(Transform lever)
+{
+    return lever.localPosition.z / leverBound;
+}
+```
