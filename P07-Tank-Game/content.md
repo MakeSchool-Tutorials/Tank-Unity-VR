@@ -1,6 +1,6 @@
 ---
-title: "Enemy AI"
-slug: public-number-1
+title: "Adding Zest"
+slug: zesty
 ---
 
 

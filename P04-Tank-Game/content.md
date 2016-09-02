@@ -145,7 +145,7 @@ public class TankControllerDebug : MonoBehaviour {
 >
     private float GetIntensity(Slider slider)
     {
-        return (slider.value - 0.5f) * 2f;
+        return Mathf.Lerp(-1,1,slider.value);
     }
 }
 ```
@@ -153,6 +153,16 @@ public class TankControllerDebug : MonoBehaviour {
 We dragged the expected objects into the slots we created by declaring public variables -- Tank into the TankControllerDebug's Tank slot; all the Sliders into the slots of the same names; Turret into the Tank's Turret slot -- and set the Tank's TankMovementSpeed to 5, TankRotationSpeed to 5, TurretPitchBound to 11, and TurretYawBound to 180 (though you may find better values through testing!).
 >
 We chose to use physics to move our Tank, because, in conjunction with a Collider, this means that we get collisions with the mountains for free :) Just be sure to lift the tank out of the ground (if your Terrain is at height 0, likely your Tank is embedded in it).
+>
+Because we wanted our inputs to our functions to be between -1 and 1 rather than between 0 and 1, like the outputs of Sliders, we used Mathf.Lerp in a helper function in our TankControllerDebug.
+>
+Lerp is a function that returns a value at some percentage between a min and a max, so for example Mathf.Lerp(0,100,0.5) woudl return 50, because 50 is 0.5 of the way between 0 and 100. You might say, "Wow. that’s stupid. I can just do math and say 0.5 \* 100 = 50." This is true, but when you're not bounded on the bottom by 0, your math would look like this:
+>
+```
+float lerpedValue = minValue + (maxValue - minValue) * percentage;
+```
+>
+and writing that every time could be a pain. Using Lerp saves you the trouble. Unity also has other Lerp functions you can access for other types of linear interpolation: Color.Lerp and Vector3.Lerp to name a few -- they all return values that are the specified percentage between the min and max you specified.
 
 All right, now it's lever time!
 
@@ -261,7 +271,7 @@ public class LeverGrabber : MonoBehaviour {
 >
     private void Controller_TriggerClicked(object sender, ClickedEventArgs e)
     {
-        leversInReach.ToList();
+        leversGrabbed = leversInReach.ToList();
     }
 >
     private void Controller_TriggerUnclicked(object sender, ClickedEventArgs e)
