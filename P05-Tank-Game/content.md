@@ -169,152 +169,39 @@ As a final bullet step, let's add a sound effect to our explosion!
 
 ![an Audio Source added](../media/Capture28.png)
 
+An AudioSource is a component that can play an AudioClip either automatically or via a method in code. Let's get a clip we can use to try it out. We can get some great sounds from the Unity Asset Store.
 
+>[action]
+>Download Fire and Spell Effects.
 
-Finally there is method here to fire the cannon, it’s pretty
-straightforward, it makes some smoke and a cannonball and honors reload
-time.
+![Fire and Spell Effects on the Asset Store](../media/Capture29.png)
 
-Now we need to attach the Main Camera to the barrel, so that when we
-look with the barrel the camera will follow it. We should also lock the
-X coordinate and Z rotation and the Y position of the rigid body so that
-the tank won’t climb the mountains. The reason for this is the tank will
-move along its forward vector, so if it tilts upward it will start
-climbing into the sky. There are ways to fix this, but for this game it
-is acceptable to just lock the rotation and position of the Rigidbody.
+You can preview audio by selected an AudioClip (located in PyroParticles/Prefabs/Audio), and clicking the play button in the bottom right. You may need to restart Unity if you didn't initially have an audio device plugged into your machine.
 
-You can see all of these settings below:
+![Preview the audio](../media/Capture31.png)
 
-![](../media/image31.png)
+>[action]
+>Then drag PyroParticles/Prefabs/Audio/FireExplosion5 into your AudioSource's AudioClip slot.
 
-Also add a Bullet Spawner to the front of the tank barrel. This will be
-the location that the bullet, smoke, and fire will be spawned when we
-shoot the cannon. Use this image as a reference of where to put it. Also
-make sure it is rotated correctly so we can use its Vector3.forward
-property to determine the angle to launch the bullet.
+![The audio dragged in](../media/Capture30.png)
 
-![](../media/image30.png)
+By default, our Audio Source is set to Play On Awake. This means that, when the object is initialized, the sound will play. This is exactly what we want :)
 
-Now we can get to the fun stuff. Let’s make our first tank bullet.
-Create a new Sphere and call it TankShell. Then create a TankShell
-Material in our Materials folder. Drag it to the tank shell, paint it
-black, and drag the shell to our prefabs folder:
+>[action]
+Go ahead and try it out!
 
-![](../media/image08.png)
+You should hear each explosion that happens!
 
-![](../media/image16.png)
+There is one more very important thing we should do to our audio though. We should make it 3D audio!
 
-We can now create a particle system to spray smoke out when the cannon
-goes off, and when the shell lands.
+Now, what does this mean exactly, 3D audio? 3D audio gets quieter the farther you are away from it. Unity gives you lots of control over just how exactly the sound should die off as you step away from the source, but we'll just be happy with the defaults.
 
-So import the standard ParticleSystems package from Unity under the
-Assets menu.
+>[action]
+>Move the AudioSource's Spatial Blend slider from 2D to 3D, and...Viola! 3D Audio :)
 
-Now you can attach Smoke to our BulletSpawner so we can see how it will
-appear when it spawns at the front of the tank during a shot. Obviously
-this smoke prefab isn’t right for us, but we can change it to do exactly
-what we want...Let’s do that now.
+![2D/3D spatial blend slider](../media/Capture32.png)
 
-![](../media/image40.png)
+You can hear the difference by firing bullets at nearby walls vs far-off ground.
 
-Click the smoke particle system then click Open Editor to view the
-particle editor, this will let you simulate and stop the effect and test
-it. Copy the settings you see on the left panel. A particle system lets
-you spawn hundreds of tiny textures that blend with the environment for
-a cheap cost. You can control the behavior of these tiny instances over
-time. We want the duration to be short, this is an explosion from a gun,
-so set the Duration to 0.25. Make sure Looping is off, this is a one
-shot kind of thing.
-
-We want the smoke to linger so set the Start Lifetime to 1 to 5, this
-means each particle has a random lifetime of beween 1 and 5 seconds.
-
-Start Speed will be 15, this will make the smoke propel forward at a
-fast speed from the front of the cannon.
-
-Start Size should be 15 to 25, this will control the scale of each
-smokelet.
-
-The Rotation is fine -18 to 180 this will control how the particles
-rotate as they are emitted.
-
-Gravity Modifier will control how gravity affects the particles. Smoke
-rises, so we want to add a slight -0.5 modifier to make it slowly rise
-into the air.
-
-Simulation Space World means that the smoke will exist in the world,
-this is important because if we make the smoke a child of the tank we
-still want the smoke to float in the world and not follow the tank
-around.
-
-Max particles 500 is fine, that is the maximum this engine can spawn.
-
-Emission should be 100, we want 100 quick particles when the system is
-created.
-
-Shape should be Cone, we can then rotate the cone to come out of the
-front of the cannon and the smoke will fly forward as expected.
-
-You will need to adjust Color over Lifetime. This property controls how
-opaque or transparent the smoke will be, and if it is tinted. The
-standard black tint is fine, but adjust the alpha settings so the smoke
-stays solid for longer.
-
-That should be it. Now when you press Simulate at the top the smoke
-explosion effect will look quite realistic.
-
-Now drag your SmokeEffect to your Prefabs folder so we can create it
-whenever we want.
-
-
-Now for the Bullet, let’s make a bullet and a bullet script. Go back to
-TankShell and create a script on it called BulletShell.
-
-This script will be really simple:
-
-~~~
-using UnityEngine;
-using System.Collections;
-
-public class BulletShell : MonoBehaviour {
-    public GameObject ExplosionPrefab;
-    void OnTriggerEnter(Collider c)
-    {
-        c.gameObject.SendMessage("BulletHit", SendMessageOptions.DontRequireReceiver);
-        Destroy((GameObject)Instantiate(ExplosionPrefab, this.transform.position, Quaternion.identity), 7f);
-        Destroy(this.gameObject);
-    }
-}
-~~~
-
-We are waiting for a collision of any kind, when the bullet collides
-with anything it will destroy itself, spawn an explosion, and send a
-message to that object called BulletHit. The object it sends the message
-to will decide what to do with BulletHit. This is good design, because
-the bullet is doing it’s job beautifully, but it is not deciding how to
-affect anyone else, it is simply letting them know if it hits them. Now
-when we make enemy tanks all we need to do is give them a BulletHit
-method, and whenever they get hit by a bullet we can make them get hurt
-or die.
-
-As you can see we also bind a public variable
-
-**public GameObject ExplosionPrefab;**
-
-ExplosionPrefab is the prefab we want to spawn when the bullet explodes.
-Note how we Instantiate this prefab:
-
-Destroy((GameObject)Instantiate(ExplosionPrefab,
-this.transform.position, Quaternion.identity), 7f);
-
-It looks like a lot of stuff, but it is simple: Destroy() tells the
-object to be destroyed (at the end there you can see 7f, which means
-after 7 seconds). This ensures the particle system gets cleaned up after
-it’s done.
-
-(GameObject)Instantiate is a cast of the result of Instantiate to
-GameObject.
-
-Then we decide what we want to instantiate, which is ExplosionPrefab,
-and we want to put it right where the bullet is at a 0,0,0 rotation
-(Quaternion.identity)
+>[action]
+>Now go ahead and try implementing another 3D sound in your scene. Give the button press a sound, or the levers a looping sound when they move! Audio can really bring a VR experience that next step forward in terms of immersion!
