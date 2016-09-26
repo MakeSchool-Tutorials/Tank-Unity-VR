@@ -1,6 +1,6 @@
 ---
 title: "Introduction"
-slug: "tanks-tanks-tanks-vr"
+slug: tanks-tanks-tanks-vr
 ---
 
 In this tutorial, we'll build a VR game in which you control a Tank from the cockpit!
