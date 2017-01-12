@@ -160,7 +160,7 @@ public class DestroyAfterDuration : MonoBehaviour {
 >
 This version of the Destroy method will destroy an object after a certain delay, which we can specify to be whatever we'd like ;)
 
-#Make it Go Boom
+# Make it Go Boom
 
 As a final bullet step, let's add a sound effect to our explosion!
 

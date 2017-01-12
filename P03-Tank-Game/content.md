@@ -14,7 +14,7 @@ Terrain is a deformable and colorable mesh that can be used to create beautiful,
 Honestly though, right now, this terrain is also kind of boring, but this is where we spice it up.
 
 >[action]
->Select the raise height icon on the left, on the Terrain component, and click and drag to create some coooool looking mountains!
+>Select the raise height icon on the left, on the Terrain component, and click and drag to create some _coooool_ looking mountains!
 
 ![Raise the Height](../media/Animation5.gif)
 
@@ -29,7 +29,7 @@ Once you have an area you like, it's time to give it some color. In order to add
 ![Standard Environment package import](../media/Capture16.png)
 
 >[action]
->Now add some Textures by selecting the paint brush icon, clicking Edit Textures-&gt;Add Texture..., and setting the Albedo Texture.  Some Textures we think you might like using are: CliffAlbedoSpecular, GrassHillAlbedo, GrassRockyAlbedo, MudRockyAlbedoSpecular, and SandAlbedo.
+>Now add some Textures by selecting the paint brush icon, clicking Edit Textures-&gt;Add Texture..., and setting the Albedo Texture. Some Textures we think you might like using are: CliffAlbedoSpecular, GrassHillAlbedo, GrassRockyAlbedo, MudRockyAlbedoSpecular, and SandAlbedo.
 
 ![Add new Textures](../media/Animation6.gif)
 

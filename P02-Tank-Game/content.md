@@ -13,7 +13,7 @@ We want to set up our Tank game as a seated experience, not a room-scale one, si
 Now we need to think of a way to see the world outside of the tank. Luckily, Unity has just the thing for us. They are called **Render Textures**. Render Textures are textures that can display what a camera sees. Perfect for this!
 
 >[action]
->Create a new Material called TankCam and and a new RenderTexture, also called TankCam.
+>Create a new Material called TankCam and a new RenderTexture, also called TankCam.
 
 ![A new RenderTexture](../media/Capture13.png)
 
@@ -23,7 +23,7 @@ Now we need to think of a way to see the world outside of the tank. Luckily, Uni
 <!-- -->
 
 >[action]
->Now assign the RenderTexture you created as the Target Texture of the Camera you juts created and as the Albedo Textrue of the Material you created, and assign the Material to the Quad. Be sure to remove the AudioListener from your new Camera!
+>Now assign the RenderTexture you created as the Target Texture of the Camera you juts created and as the Albedo Texture of the Material you created, and assign the Material to the Quad. Be sure to remove the AudioListener from your new Camera!
 
 You should now have a monitor in your Tank!
 

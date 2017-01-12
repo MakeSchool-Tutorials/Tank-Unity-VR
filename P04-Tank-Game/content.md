@@ -166,7 +166,7 @@ and writing that every time could be a pain. Using Lerp saves you the trouble. U
 
 All right, now it's lever time!
 
-#Lever Time
+# Lever Time
 
 >[action]
 >Make a set of 4 levers out of primitives like Cubes, and position the set of levers in front of the seat you expect our player to use.

@@ -146,7 +146,7 @@ public class TankEnemyController : MonoBehaviour {
 
 As you can see, the enemy waits in its Waiting state, doing nothing, until a player is in sight. Then it aims, and, when it's aiming at the player, it fires repeatedly! It checks for the player using Raycasts and performs different actions based on what it's current State is.
 
-This AI is not perfect -- far from it. To name a few issues, the enemy tank "aims" by randomly swinging its turret around until the player is in the barrel's line of sight. The way the turret is aimed is also non-ideal, in that the turret instantaneously snaps to a starting aim rotation, rather than turning smoothly from its initial orientation.
+This AI is not perfect -- far from it. To name a few issues, the enemy tank "aims" by randomly swinging its turret around until the player is in the barrel's line of sight. The way the turret is aimed is also non-ideal. The turret instantaneously snaps to a starting aim rotation, rather than turning smoothly from its initial orientation.
 
 Another issue is that the tank fires at the player no matter how far away the player is.
 
