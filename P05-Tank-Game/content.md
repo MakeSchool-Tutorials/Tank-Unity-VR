@@ -1,6 +1,6 @@
 ---
 title: "Open Fire!"
-slug: all-weapons
+slug: adding-in-bullets
 ---
 
 Let's add a button to launch bullets out of our Turret!

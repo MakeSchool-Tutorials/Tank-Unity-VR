@@ -1,6 +1,6 @@
 ---
 title: "Creating the Tank"
-slug: creating-the-tank
+slug: creating-the-tanks
 ---
 
 >[action]

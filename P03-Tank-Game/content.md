@@ -1,6 +1,6 @@
 ---
 title: "Making the World"
-slug: a-whole-new-world
+slug: making-the-world
 ---
 
 Let’s admit it, the outside is pretty dull right now. We can fix that. It is time to build the world.

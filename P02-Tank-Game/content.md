@@ -1,6 +1,6 @@
 ---
 title: "Getting a View Outside"
-slug: vista-grande
+slug: view-of-the-outside
 ---
 
 We want to set up our Tank game as a seated experience, not a room-scale one, since we don't want to encourage our players to run outside the Tank walls (trying to prevent the player from doing this at all might be a fun challenge for you at the end ;) )

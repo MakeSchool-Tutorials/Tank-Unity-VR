@@ -1,6 +1,6 @@
 ---
 title: "Making the Tank Move"
-slug: bust-a-move
+slug: moving-the-tank
 ---
 
 In prep for Tank movement, we're going to rearrange the structure of the Tank itself.

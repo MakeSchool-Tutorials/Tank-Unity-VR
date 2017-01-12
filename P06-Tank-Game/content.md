@@ -1,6 +1,6 @@
 ---
 title: "Enemy AI"
-slug: public-number-1
+slug: adding-ai-to-enemies
 ---
 
 As the final step for our game, we're going to add some Enemy Tanks, controlled by the computer. We're going to be writing our own Artificial Intelligence!
