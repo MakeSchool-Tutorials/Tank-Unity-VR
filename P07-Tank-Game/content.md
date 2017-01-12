@@ -5,7 +5,9 @@ slug: zesty
 
 Congratulations! You did it!
 
-If you'd like more challenges to test your newfound skills, you may enjoy trying any of the following:
+> [challenge]
+> If you'd like more challenges to test your newfound skills, you may enjoy trying any of the following:
+>
 - Implementing health that, when depleted, makes a tank respawn at its start position.
 - Adding more effects and sounds!
 - Improving the enemy AI.
