@@ -10,7 +10,7 @@ slug: creating-the-tanks
 
 Let's get a Tank in here.
 
-We could get one that's ready to go, but for illustrative purposes, we're going to show you how to apply Textures to someone else's model.
+We could get one that's ready to go, but for instructive purposes, we're going to show you how to apply Textures to someone else's model.
 
 >[action]
 >Download the free Tank from [TF3DM.com](http://tf3dm.com/download-page.php?url=m1a2-abrams-with-interior-33521) via the download button at the bottom of the page; as always, when working with assets you obtain from a source other than the Asset Store, be sure to check licensing details before using the asset in your game.
