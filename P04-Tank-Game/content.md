@@ -5,17 +5,18 @@ slug: moving-the-tank
 
 In prep for Tank movement, we're going to rearrange the structure of the Tank itself.
 
->[action]
->Parent Barrel, [CameraRig], Manual_MG, and RC_MG to the Turret.
-
+> [action]
+>
+Parent `Barrel`, `[CameraRig]`, `Manual_MG`, and `RC_MG` to the `Turret`.
+>
 ![The Turret is the parent of a few things](../media/Capture19.png)
-
+>
 When you do this, you'll be prompted with a warning that tells you rearranging the structure of the Prefab will break the connection of that object to the Prefab itself.
-
+>
 ![A warning about breaking connections of Prefabs will appear](../media/Capture20.png)
-
-This is both okay and expected. Just click the "Apply" button to apply the changes you just made to the Prefab, and then the connection will come back.
-
+>
+This is both okay and expected. Click the "Apply" button to apply the changes you made to the Prefab, and then the connection will come back.
+>
 ![The Apply button can reconnect the Tank object to the Tank Prefab](../media/Capture21.png)
 
 Now that everything on the Turret is parented to the Turret, when you rotate it around, everything should move with it.
@@ -26,32 +27,38 @@ You may have noticed, however, that the Alpha object is a problem... It has some
 
 We could resolve this issue by splitting up the model in Blender, but since Alpha isn't very significant to making our Tank look like a Tank, we're going to opt for an easier and quicker solution.
 
->[action]
->Disable Alpha.
-
+> [action]
+>
+Disable Alpha.
+>
 ![Alpha disabled](../media/Capture22.png)
+
+# Adding movement
 
 Now let's make our Tank move!
 
 We want to give it the following movement options:
+
 1. move forward or backwards
 1. turn left or right
 1. aim turret left or right
 1. aim turret up or down
 
-Eventually, we'll want to make these controlled by levels the player can pull, but let's take this one step at a time.  Let's mock it quickly with a UI that the player will ultimately never interact with, but that we can use for testing.
+We'll want to make these controlled by levels the player can pull, but let's take this one step at a time. Let's mock it quickly with a UI that the player will ultimately never interact with, but that we can use for testing.
 
->[action]
->Create a Canvas a UI Slider for each control. These will represent our levers. Don't spend too much time on this -- by no means does it need to look pretty -- but do be sure to label each slider clearly and to set their default values to 0.5.
+> [action]
+>
+Create a Canvas UI Slider for each control. These will represent our levers. Don't spend too much time on this -- by no means does it need to look pretty -- but do be sure to label each slider clearly and to set their default values to `0.5`.
 
 To help with testing, we've also split our views so that we can move the Sliders in the Game View while watching the Tank in the Scene View. We've hidden Stats because we aren't concerned with them right now and they cover part of our UI when they're on.
 
 ![Sliders that we will use to mock-up lever controls](../media/Capture23.png)
 
->[action]
+> [action]
 Now write code to make the Sliders control the Tank.
 >
 The specs should be as follows:
+>
 - The Tank F/B Slider should make the Tank go forwards when on the right, back when on the left, and not at all when in the center. Bonus points if it moves faster the farther it is on either end.
 - The Tank L/R Slider should make the Tank turn right when on the right, left when on the left, and not at all when in the center. Bonus points if it turns faster the farther it is on either end.
 - The Turret L/R Slider should make the Turret aim to exactly 180 degrees about the up axis when all the way on the right, to exactly -180 degrees about the up axis when all the way on the left, and to exactly 0 degrees about the up axis when in the center.
@@ -65,11 +72,11 @@ This is a LOT to do at once, so be sure to break it down into small, easily test
 
 ![The UI Tank Controls in action](../media/Animation9.gif)
 
->[solution]
+> [solution]
 >
->We did this by writing two components, one called "Tank," which we attached to the Tank, and one called "TankControllerDebug," which we attached to the Canvas.
+>We did this by writing two components, one called `Tank`, which we attached to the `Tank`, and one called `TankControllerDebug`, which we attached to the `Canvas`.
 >
-Tank looked like this:
+`Tank` looked like this:
 >
 ```
 using UnityEngine;
@@ -86,10 +93,10 @@ public class Tank : MonoBehaviour {
     public Transform turret;
     private Rigidbody rb;
 >
-	// Use this for initialization
-	void Start () {
+  // Use this for initialization
+  void Start () {
         rb = GetComponent<Rigidbody>();
-	}
+  }
 >
     public void Move(float intensity)
     {
@@ -118,7 +125,7 @@ public class Tank : MonoBehaviour {
 >
 ```
 >
-and TankControllerDebug looked like this:
+and `TankControllerDebug` looked like this:
 >
 ```
 using UnityEngine;
@@ -134,14 +141,14 @@ public class TankControllerDebug : MonoBehaviour {
 >
     public Tank tank;
 >
-	// Update is called once per frame
-	void Update () {
+  // Update is called once per frame
+  void Update () {
 >
         tank.Move(GetIntensity(sliderMoveFB));
         tank.Turn(GetIntensity(sliderTurnLR));
         tank.TurnTurret(GetIntensity(sliderTurretUD), GetIntensity(sliderTurretLR));
 >
-	}
+  }
 >
     private float GetIntensity(Slider slider)
     {
@@ -156,7 +163,7 @@ We chose to use physics to move our Tank, because, in conjunction with a Collide
 >
 Because we wanted our inputs to our functions to be between -1 and 1 rather than between 0 and 1, like the outputs of Sliders, we used Mathf.Lerp in a helper function in our TankControllerDebug.
 >
-Lerp is a function that returns a value at some percentage between a min and a max, so for example Mathf.Lerp(0,100,0.5) woudl return 50, because 50 is 0.5 of the way between 0 and 100. You might say, "Wow. that’s stupid. I can just do math and say 0.5 \* 100 = 50." This is true, but when you're not bounded on the bottom by 0, your math would look like this:
+Lerp is a function that returns a value at some percentage between a min and a max, so for example Mathf.Lerp(0,100,0.5) woudl return 50, because 50 is 0.5 of the way between 0 and 100. You might say, "Wow. that’s stupid. I can just do math and say 0.5 * 100 = 50." This is true, but when you're not bounded on the bottom by 0, your math would look like this:
 >
 ```
 float lerpedValue = minValue + (maxValue - minValue) * percentage;
@@ -168,17 +175,19 @@ All right, now it's lever time!
 
 # Lever Time
 
->[action]
->Make a set of 4 levers out of primitives like Cubes, and position the set of levers in front of the seat you expect our player to use.
+> [action]
+>
+Make a set of 4 levers out of primitives like Cubes, and position the set of levers in front of the seat you expect our player to use.
 
 ![The Control Panel](../media/Capture24.png)
 
-We want to be able to pull on these levers and have them move forwards and backwards, but no other directions, and to be bounded -- basically, we're trying to simulate them being in slats that constrain their motion.
+We want to be able to pull on these levers and have them move forwards and backwards, but no other directions, and to be bounded. We're trying to simulate them being in slats that constrain their motion.
 
-In order to do this, we're going to write a script, and we're also going to make it give us some visual feedback.
+In order to do this, we're going to write a script, and we're also going to make it give them some visual feedback.
 
->[action]
->Create a component named "TankController," attach it to your Control Panel, and give it the following definition:
+> [action]
+>
+Create a component named "TankController," attach it to your Control Panel, and give it the following definition:
 >
 ```
 using UnityEngine;
@@ -196,8 +205,8 @@ public class TankController : MonoBehaviour {
 >
     private Transform[] levers;
 >
-	// Use this for initialization
-	void Start () {
+  // Use this for initialization
+  void Start () {
 >
         List<Transform> leversMut = new List<Transform>();
 >
@@ -213,7 +222,7 @@ public class TankController : MonoBehaviour {
             CreateIndicator(lever.position + lever.forward * leverBound);
             CreateIndicator(lever.position - lever.forward * leverBound);
         }
-	}
+  }
 >
     private void CreateIndicator(Vector3 position)
     {
@@ -221,11 +230,11 @@ public class TankController : MonoBehaviour {
         go.transform.localScale = Vector3.one * 0.05f;
         go.transform.position = position;
         go.transform.SetParent(transform);
-
+>
     }
 >
-	// Update is called once per frame
-	void Update () {
+  // Update is called once per frame
+  void Update () {
 >
         foreach (Transform lever in levers)
         {
@@ -233,7 +242,7 @@ public class TankController : MonoBehaviour {
             localPosition.z = Mathf.Clamp(localPosition.z, -leverBound, leverBound);
             lever.localPosition = localPosition;
         }
-	}
+  }
 }
 ```
 >
@@ -243,10 +252,11 @@ When you run the Scene and try to drag the levers past the bounds, they should s
 
 ![The levers stop at the spheres](../media/Animation10.gif)
 
-Now let's make the levers grabbable by our controllers when we press the Trigger.
+Now let's make the levers grab-able by our controllers when we press the `Trigger`.
 
->[action]
->Create the following component, and then add it to each hand:
+> [action]
+>
+Create the following component, and then add it to each hand:
 >
 ```
 using UnityEngine;
@@ -261,13 +271,13 @@ public class LeverGrabber : MonoBehaviour {
     private HashSet<Transform> leversInReach = new HashSet<Transform>();
     private List<Transform> leversGrabbed = new List<Transform>();
 >
-	// Use this for initialization
-	void Start () {
+  // Use this for initialization
+  void Start () {
         controller = GetComponent<SteamVR_TrackedController>();
-
+>
         controller.TriggerClicked += Controller_TriggerClicked;
         controller.TriggerUnclicked += Controller_TriggerUnclicked;
-	}
+  }
 >
     private void Controller_TriggerClicked(object sender, ClickedEventArgs e)
     {
@@ -306,7 +316,7 @@ and add a Sphere Collider to your controller, sized and positioned so that it's 
 
 ![The controller set up](../media/Capture26.png)
 
->[action]
+> [action]
 >Then modify your TankController component to look like the following:
 >
 ```
@@ -356,8 +366,8 @@ public class TankController : MonoBehaviour {
         go.transform.SetParent(transform);
     }
 >
-	// Update is called once per frame
-	void Update () {
+  // Update is called once per frame
+  void Update () {
 >
         foreach (LeverGrabber grabber in grabbers)
         {
@@ -372,11 +382,11 @@ public class TankController : MonoBehaviour {
                 leverLocalPositionNew.z = Mathf.Clamp(lever.localPosition.z, -leverBound, leverBound);
                 leverLocalPositionNew.x = leverLocalPositionOld.x;
                 leverLocalPositionNew.y = leverLocalPositionOld.y;
-
+>
                 lever.localPosition = leverLocalPositionNew;
             }
         }
-	}
+  }
 >
     private float GetLeverIntensity(Transform lever)
     {
@@ -389,7 +399,7 @@ public class TankController : MonoBehaviour {
 
 <!-- -->
 
->[action]
+> [action]
 >Tag your levers with the tag "Lever" before you run the Scene!
 
 Then when you run it...
@@ -400,12 +410,12 @@ Presto!
 
 Now all that's left to do is read values from our levers and transmit those to the Tank ;) Think you're up for it?
 
->[action]
->Make the levers control the Tank! A good first step if you don't know where to start is to output values for the levers between -1 and 1, like we did for the Sliders. Then you can just use the same logic that the Sliders used.
+> [action]
+>Make the levers control the Tank! A good first step if you don't know where to start is to output values for the levers between `-1` and `1`, like we did for the Sliders. Then you can use the same logic that the Sliders used.
 
 <!-- -->
 
->[solution]
+> [solution]
 >
 We did this by adding the following to the end of TankController's Update method:
 >
