@@ -13,7 +13,8 @@ Amongst other things, you'll learn how to:
 If you'd like to see what the final project will be like, you can check it out by cloning and opening this package:
 
 ```
-git clone https://MakeSchool-Tutorials@bitbucket.org/MakeSchool-Tutorials/tanks-unity-vr.git
+cd Desktop
+git clone https://github.com/MakeSchool-Tutorials/Tank-Unity-VR-Solution.git
 ```
 
 Let's get started!
